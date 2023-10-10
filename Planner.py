@@ -1,11 +1,12 @@
 from tkinter import *
 import PlanData as pd
 import Segment as seg
+import StateMachine as sm
 
 root = Tk()
 root.resizable(False, False)
 
-state = "select"
+state = sm.StateMachine()
 
 def saveFile(segments, close):
     dataSet = pd.PlanData(segments)
@@ -19,10 +20,17 @@ def saveAndLoad(segments, widget):
     root.geometry("200x120")
     loadProjectPage(widget)
     
+def saveAndReturn(segments, widget):
+    saveFile(segments, False)
+    widget.destroy()
+    createStartScreen()
+
+def clearAndReturn(widget):
+    widget.pack_forget()
+    createStartScreen()
 
 def createPage(widget, contents):
-    global state
-    state = "project"
+    state.setState(1)
     widget.pack_forget()
     root.geometry("1400x800")
     
@@ -58,6 +66,10 @@ def createPage(widget, contents):
     menubar = Menu(root)
     filemenu = Menu(menubar, tearoff=0)
     filemenu.add_command(
+        label = "Save",
+        command = lambda: saveFile(segments, False)
+    )
+    filemenu.add_command(
         label="Save And Close",
         command = lambda: saveFile(segments, True)
     )
@@ -66,8 +78,17 @@ def createPage(widget, contents):
         command = lambda: saveAndLoad(segments, frame)
 
     )
+    filemenu.add_command(
+        label = "Back",
+        command = lambda: saveAndReturn(segments, frame)
+    )
     menubar.add_cascade(label="File", menu=filemenu)
     root.config(menu=menubar)
+
+    def save(e):
+        saveFile(segments, False)
+
+    root.bind("<Command-s>", save)
 
 
 def fetchData(widget, name):
@@ -88,6 +109,19 @@ def fetchData(widget, name):
                 value = ""
     createPage(widget, contents)
 
+def removeChunk(name, widget):
+    data = ""
+    with open("Plans.txt", "r") as f:
+        data = f.read()
+        startIndex = data.find("<"+name)
+        if startIndex == -1:
+            return
+        endIndex = data[startIndex:].find(">") + 1
+        data = data[:startIndex] + data[startIndex+endIndex:]
+    with open("Plans.txt", "w") as f:
+        f.write(data)
+    clearAndReturn(widget)
+
 def findRecentProjects():
     names = []
     with open("Plans.txt", "r") as f:
@@ -105,8 +139,7 @@ def findRecentProjects():
 
 
 def loadProjectPage(widget):
-    global state
-    state = "load"
+    state.setState(2)
     widget.pack_forget()
     frame = Frame(root, padx=20, pady=20)
     frame.pack()
@@ -120,14 +153,44 @@ def loadProjectPage(widget):
     )
     loadProjectButton.pack()
 
+    backButton = Button(frame, text="Back", command = lambda: clearAndReturn(frame))
+    backButton.pack()
+
     def handler(e):
-        if state == "load":
+        if state.getStateIndex() == 2:
             fetchData(frame, projectNameVar.get())
 
     root.bind("<Return>", handler)
 
+def deletePage(widget):
+    state.setState(3)
+    widget.pack_forget()
 
-def loadScreen():
+    frame = Frame(root, padx=20, pady=20)
+    frame.pack()
+    label = Label(frame, text="Enter Project Name: ")
+    label.pack()
+
+    projectNameVar = StringVar()
+    projectName = Entry(frame, textvariable=projectNameVar)
+    projectName.pack()
+
+    loadProjectButton = Button(
+        frame, text="Delete", command=lambda: removeChunk(projectNameVar.get(), frame))
+    loadProjectButton.pack()
+
+    backButton = Button(frame, text = "Back", command=lambda:clearAndReturn(frame))
+    backButton.pack()
+
+    def handler(e):
+        if state.getStateIndex() == 3:
+            removeChunk(projectNameVar.get(), frame)
+
+    root.bind("<Return>", handler)
+
+
+def createStartScreen():
+    state.setState(0)
     root.title("Planner")
     frame = Frame(root, padx=5, pady=10)
     frame.pack()
@@ -140,10 +203,20 @@ def loadScreen():
         command=lambda: createPage(frame, ["Project Name", "", "", "", "", "", "", ""]),
     )
     newProject.pack(side=LEFT)
-    loadProject = Button(
-        buttonFrame, text="Load Project", height=2, command=lambda: loadProjectPage(frame)
+    deleteProject = Button(
+        buttonFrame,
+        text = "Delete Project",
+        height = 2,
+        command = lambda: deletePage(frame)
     )
-    loadProject.pack(side=RIGHT)
+    deleteProject.pack(side=RIGHT)
+    loadProject = Button(
+        buttonFrame, 
+        text="Load Project", 
+        height=2, 
+        command=lambda: loadProjectPage(frame)
+    )
+    loadProject.pack()
     recentsFrame = Frame(frame, padx=5)
     recentsFrame.pack()
     recents = Label(recentsFrame, text="Recent Projects:", pady=3)
@@ -154,5 +227,5 @@ def loadScreen():
         label.pack()
 
 if __name__ == "__main__":
-    loadScreen()
+    createStartScreen()
     root.mainloop()
