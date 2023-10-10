@@ -123,11 +123,12 @@ def removeChunk(name, widget):
     clearAndReturn(widget)
 
 def findRecentProjects():
+    MAX_PROJECTS = 5
     names = []
     with open("Plans.txt", "r") as f:
         data = f.read()
-        index = indexE = 0
-        while True:
+        index = indexE = numProjects = 0
+        while numProjects <= MAX_PROJECTS:
             index = data.find("<")
             indexE = data[index:].find("~")
             if index < 0 or indexE < 0:
@@ -135,6 +136,7 @@ def findRecentProjects():
             index += 1
             names.append(data[index:index+indexE-2])
             data = data[index+indexE:]
+            numProjects += 1
     return names
 
 
