@@ -11,18 +11,18 @@ class PlanData:
 
     def writeData(self):
         f = open(
-            "Plans.txt",
+            "/Users/josephcolangelo/PersonalFiles/Plans.txt",
             "r",
         )
         data = f.read()
-        startIndex = data.find("<"+self.name)
+        startIndex = data.find("<" + self.name)
         if startIndex != -1:
             endIndex = data[startIndex:].find(">") + 1
             data = (
                 data[:startIndex]
                 + (
-                    "<" +
-                    self.name
+                    "<"
+                    + self.name
                     + "~"
                     + self.desc
                     + "~"
@@ -39,12 +39,12 @@ class PlanData:
                     + self.logic
                     + ">"
                 )
-                + data[startIndex+endIndex:]
+                + data[startIndex + endIndex :]
             )
         else:
             data += (
-                "<" +
-                self.name
+                "<"
+                + self.name
                 + "~"
                 + self.desc
                 + "~"
@@ -63,6 +63,6 @@ class PlanData:
             )
         f.close()
 
-        f = open("Plans.txt", "w")
+        f = open("/Users/josephcolangelo/PersonalFiles/Plans.txt", "w")
         f.write(data)
         f.close()

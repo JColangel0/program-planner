@@ -8,34 +8,39 @@ root.resizable(False, False)
 
 state = sm.StateMachine()
 
+
 def saveFile(segments, close):
     dataSet = pd.PlanData(segments)
     dataSet.writeData()
     if close:
         root.quit()
 
+
 def saveAndLoad(segments, widget):
     saveFile(segments, False)
     widget.destroy()
     root.geometry("200x120")
     loadProjectPage(widget)
-    
+
+
 def saveAndReturn(segments, widget):
     saveFile(segments, False)
     widget.destroy()
     createStartScreen()
 
+
 def clearAndReturn(widget):
     widget.pack_forget()
     createStartScreen()
+
 
 def createPage(widget, contents):
     state.setState(1)
     widget.pack_forget()
     root.geometry("1400x800")
-    
+
     frame = Frame(root, width=1400, height=800)
-    frame.place(x=0,y=0)
+    frame.place(x=0, y=0)
 
     name = seg.Segment(20, -10, 30, 1, "", frame, contents[0])
     name.createSegment()
@@ -61,27 +66,27 @@ def createPage(widget, contents):
     logic = seg.Segment(970, 20, 50, 37, "Logic", frame, contents[7])
     logic.createSegment()
 
-    segments = [name, description, toDoList, doneTasks, dependencies, UISeg, specs, logic]
+    segments = [
+        name,
+        description,
+        toDoList,
+        doneTasks,
+        dependencies,
+        UISeg,
+        specs,
+        logic,
+    ]
 
     menubar = Menu(root)
     filemenu = Menu(menubar, tearoff=0)
+    filemenu.add_command(label="Save", command=lambda: saveFile(segments, False))
     filemenu.add_command(
-        label = "Save",
-        command = lambda: saveFile(segments, False)
+        label="Save And Close", command=lambda: saveFile(segments, True)
     )
     filemenu.add_command(
-        label="Save And Close",
-        command = lambda: saveFile(segments, True)
+        label="Load Project", command=lambda: saveAndLoad(segments, frame)
     )
-    filemenu.add_command(
-        label = "Load Project",
-        command = lambda: saveAndLoad(segments, frame)
-
-    )
-    filemenu.add_command(
-        label = "Back",
-        command = lambda: saveAndReturn(segments, frame)
-    )
+    filemenu.add_command(label="Back", command=lambda: saveAndReturn(segments, frame))
     menubar.add_cascade(label="File", menu=filemenu)
     root.config(menu=menubar)
 
@@ -93,7 +98,7 @@ def createPage(widget, contents):
 
 def fetchData(widget, name):
     contents = []
-    with open("Plans.txt", "r") as f:
+    with open("/Users/josephcolangelo/PersonalFiles/Plans.txt", "r") as f:
         data = f.read()
         sI = data.find(name)
         if sI == -1:
@@ -109,23 +114,25 @@ def fetchData(widget, name):
                 value = ""
     createPage(widget, contents)
 
+
 def removeChunk(name, widget):
     data = ""
-    with open("Plans.txt", "r") as f:
+    with open("/Users/josephcolangelo/PersonalFiles/Plans.txt", "r") as f:
         data = f.read()
-        startIndex = data.find("<"+name)
+        startIndex = data.find("<" + name)
         if startIndex == -1:
             return
         endIndex = data[startIndex:].find(">") + 1
-        data = data[:startIndex] + data[startIndex+endIndex:]
-    with open("Plans.txt", "w") as f:
+        data = data[:startIndex] + data[startIndex + endIndex :]
+    with open("PersonalFiles/Plans.txt", "w") as f:
         f.write(data)
     clearAndReturn(widget)
+
 
 def findRecentProjects():
     MAX_PROJECTS = 5
     names = []
-    with open("Plans.txt", "r") as f:
+    with open("/Users/josephcolangelo/PersonalFiles/Plans.txt", "r") as f:
         data = f.read()
         index = indexE = numProjects = 0
         while numProjects <= MAX_PROJECTS:
@@ -134,8 +141,8 @@ def findRecentProjects():
             if index < 0 or indexE < 0:
                 break
             index += 1
-            names.append(data[index:index+indexE-2])
-            data = data[index+indexE:]
+            names.append(data[index : index + indexE - 2])
+            data = data[index + indexE :]
             numProjects += 1
     return names
 
@@ -155,7 +162,7 @@ def loadProjectPage(widget):
     )
     loadProjectButton.pack()
 
-    backButton = Button(frame, text="Back", command = lambda: clearAndReturn(frame))
+    backButton = Button(frame, text="Back", command=lambda: clearAndReturn(frame))
     backButton.pack()
 
     def handler(e):
@@ -163,6 +170,7 @@ def loadProjectPage(widget):
             fetchData(frame, projectNameVar.get())
 
     root.bind("<Return>", handler)
+
 
 def deletePage(widget):
     state.setState(3)
@@ -178,10 +186,11 @@ def deletePage(widget):
     projectName.pack()
 
     loadProjectButton = Button(
-        frame, text="Delete", command=lambda: removeChunk(projectNameVar.get(), frame))
+        frame, text="Delete", command=lambda: removeChunk(projectNameVar.get(), frame)
+    )
     loadProjectButton.pack()
 
-    backButton = Button(frame, text = "Back", command=lambda:clearAndReturn(frame))
+    backButton = Button(frame, text="Back", command=lambda: clearAndReturn(frame))
     backButton.pack()
 
     def handler(e):
@@ -206,17 +215,14 @@ def createStartScreen():
     )
     newProject.pack(side=LEFT)
     deleteProject = Button(
-        buttonFrame,
-        text = "Delete Project",
-        height = 2,
-        command = lambda: deletePage(frame)
+        buttonFrame, text="Delete Project", height=2, command=lambda: deletePage(frame)
     )
     deleteProject.pack(side=RIGHT)
     loadProject = Button(
-        buttonFrame, 
-        text="Load Project", 
-        height=2, 
-        command=lambda: loadProjectPage(frame)
+        buttonFrame,
+        text="Load Project",
+        height=2,
+        command=lambda: loadProjectPage(frame),
     )
     loadProject.pack()
     recentsFrame = Frame(frame, padx=5)
@@ -228,6 +234,10 @@ def createStartScreen():
         label = Label(recentsFrame, text=x)
         label.pack()
 
-if __name__ == "__main__":
+def main():
     createStartScreen()
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
